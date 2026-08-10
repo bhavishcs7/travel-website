@@ -10,12 +10,15 @@ import {
 } from 'lucide-react';
 import AdminNavbar from './AdminNavbar';
 
-const API_PLACES = 'http://localhost:5000/api/places';
-const API_CONFIG = 'http://localhost:5000/api/config';
+const API_PLACES = `${import.meta.env.VITE_API_URL}/destinations`;
+const API_CONFIG = `${import.meta.env.VITE_API_URL}/config`;
 
 const getImageUrl = (url) => {
   if (!url) return '/content_hunter_logo_transparent.png';
-  if (url.startsWith('/uploads/')) return `http://localhost:5000${url}`;
+  if (url.startsWith('/uploads/')) {
+    const baseUrl = (import.meta.env.VITE_API_URL).replace(/\/api$/, '');
+    return `${baseUrl}${url}`;
+  }
   return url;
 };
 
