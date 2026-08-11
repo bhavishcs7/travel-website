@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Video, Image as ImageIcon, MapPin, ExternalLink, ChevronLeft, ChevronRight, Map, Compass, Clock, History, Loader2, ArrowLeft } from 'lucide-react';
 
-const API_PLACES = `${import.meta.env.VITE_API_URL || '/api'}/places`;
+const API_PLACES = `${import.meta.env.VITE_API_URL || '/api'}/destinations`;
 
 const getImageUrl = (url) => {
   if (!url) return '/content_hunter_logo_transparent.png';

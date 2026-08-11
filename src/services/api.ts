@@ -36,23 +36,23 @@ export const authApi = {
 
 export const placesApi = {
   getAll: async (): Promise<any> => {
-    const response = await api.get('/places');
+    const response = await api.get('/destinations');
     return response.data;
   },
   getById: async (id: string): Promise<any> => {
-    const response = await api.get(`/places/${id}`);
+    const response = await api.get(`/destinations/${id}`);
     return response.data;
   },
   create: async (formData: FormData): Promise<any> => {
-    const response = await api.post('/places', formData);
+    const response = await api.post('/destinations', formData);
     return response.data;
   },
   update: async (id: string, formData: FormData): Promise<any> => {
-    const response = await api.put(`/places/${id}`, formData);
+    const response = await api.put(`/destinations/${id}`, formData);
     return response.data;
   },
   delete: async (id: string): Promise<any> => {
-    const response = await api.delete(`/places/${id}`);
+    const response = await api.delete(`/destinations/${id}`);
     return response.data;
   }
 };

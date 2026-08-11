@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import AdminNavbar from './AdminNavbar';
 
-const API_PLACES = `${import.meta.env.VITE_API_URL || '/api'}/places`;
+const API_PLACES = `${import.meta.env.VITE_API_URL || '/api'}/destinations`;
 const API_CONFIG = `${import.meta.env.VITE_API_URL || '/api'}/config`;
 
 const getImageUrl = (url) => {

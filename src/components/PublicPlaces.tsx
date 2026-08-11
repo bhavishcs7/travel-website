@@ -87,7 +87,7 @@ export default function PublicPlaces({ isHomePage = false }) {
       setLoading(true); setError(null);
       let res;
       try { res = await placesApi.getAll(); }
-      catch { const r = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/places`); res = await r.json(); }
+      catch { const r = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/destinations`); res = await r.json(); }
       if (res?.success) setPlaces(res.data || []);
       else setError(res?.message || 'Could not fetch places.');
     } catch { setError('Could not reach the server.'); }
