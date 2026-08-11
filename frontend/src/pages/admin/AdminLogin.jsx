@@ -29,11 +29,11 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-      
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="glass-panel max-w-md w-full p-8 md:p-10 rounded-3xl border border-red-900/30 space-y-6 relative z-10 shadow-2xl bg-black/90">
-        
+
         <div className="text-center space-y-3">
           <div className="w-14 h-14 rounded-2xl bg-red-600 border-2 border-white/20 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(220,38,38,0.7)]">
             <Video className="w-7 h-7 text-white fill-current" />

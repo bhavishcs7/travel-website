@@ -2,28 +2,57 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import Place from '../models/Place.js';
 import { protectAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Ensure upload directory exists
-const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Configure Cloudinary if credentials are provided in environment
+const hasCloudinary = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME && 
+  process.env.CLOUDINARY_API_KEY && 
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (hasCloudinary) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
 }
 
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'place-' + uniqueSuffix + ext);
+// Ensure upload directory exists for local disk fallback
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (err) {
+    // Read-only filesystem on serverless without Cloudinary
   }
-});
+}
+
+// Multer Storage Configuration (Cloudinary or Local Disk)
+const storage = hasCloudinary
+  ? new CloudinaryStorage({
+      cloudinary: cloudinary,
+      params: {
+        folder: 'content_hunter_places',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif']
+      }
+    })
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, 'place-' + uniqueSuffix + ext);
+      }
+    });
 
 // File Filter for Images
 const fileFilter = (req, file, cb) => {
@@ -45,7 +74,17 @@ const cpUpload = upload.fields([
   { name: 'galleryImages', maxCount: 15 }
 ]);
 
-const getFileUrl = (filename) => `/uploads/${filename}`;
+// Helper to get image URL from file object (works with Cloudinary URL and local upload path)
+const getFileUrl = (file) => {
+  if (!file) return '';
+  if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
+    return file.path;
+  }
+  if (file.secure_url) {
+    return file.secure_url;
+  }
+  return `/uploads/${file.filename}`;
+};
 
 // PUBLIC API: GET /api/places - Get all published places
 router.get('/', async (req, res) => {
@@ -76,7 +115,6 @@ router.get('/:id', async (req, res) => {
     if (!place) {
       return res.status(404).json({ success: false, message: 'Place not found' });
     }
-    // Optional: could restrict to published only for non-admins, but leaving open so admins can preview
     res.status(200).json({ success: true, data: place });
   } catch (error) {
     console.error('Error fetching place:', error);
@@ -98,14 +136,14 @@ router.post('/', protectAdmin, cpUpload, async (req, res) => {
 
     let coverImage = '/content_hunter_camera_logo.jpg';
     if (req.files && req.files.coverImage && req.files.coverImage.length > 0) {
-      coverImage = getFileUrl(req.files.coverImage[0].filename);
+      coverImage = getFileUrl(req.files.coverImage[0]);
     } else if (coverImageUrl && coverImageUrl.trim()) {
       coverImage = coverImageUrl.trim();
     }
 
     let galleryImages = [];
     if (req.files && req.files.galleryImages && req.files.galleryImages.length > 0) {
-      galleryImages = req.files.galleryImages.map(file => getFileUrl(file.filename));
+      galleryImages = req.files.galleryImages.map(file => getFileUrl(file));
     } else if (req.body.galleryImageUrls) {
       try {
         galleryImages = JSON.parse(req.body.galleryImageUrls);
@@ -170,13 +208,13 @@ router.put('/:id', protectAdmin, cpUpload, async (req, res) => {
     if (dateVisited !== undefined) place.dateVisited = dateVisited ? new Date(dateVisited) : null;
 
     if (req.files && req.files.coverImage && req.files.coverImage.length > 0) {
-      place.coverImage = getFileUrl(req.files.coverImage[0].filename);
+      place.coverImage = getFileUrl(req.files.coverImage[0]);
     } else if (coverImageUrl) {
       place.coverImage = coverImageUrl.trim();
     }
 
     if (req.files && req.files.galleryImages && req.files.galleryImages.length > 0) {
-      const newGallery = req.files.galleryImages.map(file => getFileUrl(file.filename));
+      const newGallery = req.files.galleryImages.map(file => getFileUrl(file));
       place.galleryImages = [...place.galleryImages, ...newGallery];
     }
 
