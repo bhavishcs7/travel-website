@@ -1,6 +1,6 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -36,23 +36,23 @@ export const authApi = {
 
 export const placesApi = {
   getAll: async (): Promise<any> => {
-    const response = await api.get('/destinations');
+    const response = await api.get('/places');
     return response.data;
   },
   getById: async (id: string): Promise<any> => {
-    const response = await api.get(`/destinations/${id}`);
+    const response = await api.get(`/places/${id}`);
     return response.data;
   },
   create: async (formData: FormData): Promise<any> => {
-    const response = await api.post('/destinations', formData);
+    const response = await api.post('/places', formData);
     return response.data;
   },
   update: async (id: string, formData: FormData): Promise<any> => {
-    const response = await api.put(`/destinations/${id}`, formData);
+    const response = await api.put(`/places/${id}`, formData);
     return response.data;
   },
   delete: async (id: string): Promise<any> => {
-    const response = await api.delete(`/destinations/${id}`);
+    const response = await api.delete(`/places/${id}`);
     return response.data;
   }
 };

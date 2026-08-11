@@ -7,7 +7,7 @@ import placesApi from '../services/api';
 const getImageUrl = (url) => {
   if (!url) return '/content_hunter_logo_transparent.png';
   if (url.startsWith('/uploads/')) {
-    const baseUrl = (import.meta.env.VITE_API_URL).replace(/\/api$/, '');
+    const baseUrl = (import.meta.env.VITE_API_URL || '/api').replace(/\/api$/, '');
     return `${baseUrl}${url}`;
   }
   return url;
@@ -87,7 +87,7 @@ export default function PublicPlaces({ isHomePage = false }) {
       setLoading(true); setError(null);
       let res;
       try { res = await placesApi.getAll(); }
-      catch { const r = await fetch(`${import.meta.env.VITE_API_URL}/destinations`); res = await r.json(); }
+      catch { const r = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/places`); res = await r.json(); }
       if (res?.success) setPlaces(res.data || []);
       else setError(res?.message || 'Could not fetch places.');
     } catch { setError('Could not reach the server.'); }
