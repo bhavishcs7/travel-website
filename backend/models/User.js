@@ -5,36 +5,38 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    default: 'Alex Rivera'
+    trim: true,
   },
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    lowercase: true,
+    trim: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
   role: {
     type: String,
     enum: ['admin', 'editor'],
-    default: 'admin'
+    default: 'admin',
   },
   avatar: {
     type: String,
-    default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600'
+    default: '',
   },
   bio: {
     type: String,
-    default: 'Full-time travel creator, filmmaker, and adventurer sharing hidden gems across the globe.'
+    default: '',
   },
   socials: {
-    youtube: { type: String, default: 'https://youtube.com' },
-    instagram: { type: String, default: 'https://instagram.com' },
-    twitter: { type: String, default: 'https://twitter.com' },
-    tiktok: { type: String, default: 'https://tiktok.com' }
-  }
+    youtube: { type: String, default: '' },
+    instagram: { type: String, default: '' },
+    twitter: { type: String, default: '' },
+    tiktok: { type: String, default: '' },
+  },
 }, { timestamps: true });
 
 userSchema.methods.matchPassword = async function(enteredPassword) {
@@ -43,10 +45,12 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
 
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 module.exports = mongoose.model('User', userSchema);
+

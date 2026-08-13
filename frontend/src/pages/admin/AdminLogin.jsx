@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Video, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Video, Lock, Mail, ArrowRight } from 'lucide-react';
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState('admin@contenthunter.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -89,14 +89,7 @@ const AdminLogin = () => {
           </button>
         </form>
 
-        <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-          <div className="flex items-center space-x-1 font-bold text-red-500">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Admin Login Access:</span>
-          </div>
-          <div>Email: <code className="text-white">admin@contenthunter.com</code></div>
-          <div>Password: <code className="text-white">Password123!</code></div>
-        </div>
+
 
       </div>
     </div>

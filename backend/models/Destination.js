@@ -22,7 +22,7 @@ const destinationSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Mountain', 'Beach', 'Culture', 'Adventure', 'Island', 'Forest', 'City', 'Desert']
+    enum: ['Historical', 'Heritage', 'Architecture', 'Fort', 'Nature', 'Temple', 'Cave', 'Waterfall', 'Mountain', 'Beach', 'Culture', 'Adventure', 'Island', 'Forest', 'City', 'Desert', 'Other'],
   },
   coverImage: {
     type: String,

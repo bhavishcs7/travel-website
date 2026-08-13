@@ -1,28 +1,14 @@
-// Content Hunter Clean Store - Zero Sample Data
+// NOTE: This memory store is no longer used in production routes.
+// All data operations go directly to MongoDB.
+// This file is kept as an empty stub to avoid breaking any legacy imports.
 const memoryStore = {
-  users: [
-    {
-      _id: 'user-admin',
-      name: 'Content Hunter Admin',
-      email: 'admin@contenthunter.com',
-      password: 'Password123!',
-      role: 'admin',
-      bio: 'Exploring ancient heritage, historical temples, forts, and unfolding untold stories.',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600',
-      socials: {
-        youtube: 'https://youtube.com',
-        instagram: 'https://instagram.com',
-        twitter: 'https://twitter.com',
-        tiktok: 'https://tiktok.com'
-      }
-    }
-  ],
-
+  users: [],
   destinations: [],
   blogs: [],
   videos: [],
   gallery: [],
-  messages: []
+  messages: [],
 };
 
 module.exports = memoryStore;
+

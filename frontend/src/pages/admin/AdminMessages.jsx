@@ -14,7 +14,7 @@ const AdminMessages = () => {
   const fetchMessages = async () => {
     try {
       const res = await api.get('/messages');
-      setMessages(res.data);
+      setMessages(res.data.data || res.data);
     } catch (e) {
       console.error(e);
     }

@@ -25,7 +25,7 @@ const AdminGallery = () => {
   const fetchGallery = async () => {
     try {
       const res = await api.get('/gallery');
-      setGallery(res.data);
+      setGallery(res.data.data || res.data);
     } catch (e) {
       console.error(e);
     }

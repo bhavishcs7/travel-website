@@ -31,7 +31,7 @@ const AdminBlogs = () => {
     setLoading(true);
     try {
       const res = await api.get('/blogs');
-      setBlogs(res.data);
+      setBlogs(res.data.data || res.data);
     } catch (e) {
       console.error(e);
     } finally {

@@ -10,7 +10,7 @@ const GalleryPreview = () => {
 
   useEffect(() => {
     api.get('/gallery')
-      .then(res => setPhotos(res.data.slice(0, 6)))
+      .then(res => setPhotos((res.data.data || res.data).slice(0, 6)))
       .catch(err => console.error(err));
   }, []);
 

@@ -8,7 +8,7 @@ const Videos = () => {
 
   useEffect(() => {
     api.get('/videos')
-      .then(res => setVideos(res.data))
+      .then(res => setVideos(res.data.data || res.data))
       .catch(err => console.error(err));
   }, []);
 

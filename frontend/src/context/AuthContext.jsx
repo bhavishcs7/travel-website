@@ -12,7 +12,8 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       api.get('/auth/me')
         .then((res) => {
-          setUser(res.data.user);
+          // Backend now returns { success: true, user: {...} }
+          setUser(res.data.user || res.data);
         })
         .catch(() => {
           logout();
@@ -25,6 +26,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
+    // Backend now returns { success: true, token, user: {...} }
     const { token: jwtToken, user: userData } = res.data;
     localStorage.setItem('wanderlust_token', jwtToken);
     setToken(jwtToken);
@@ -40,15 +42,19 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (data) => {
     const res = await api.put('/auth/profile', data);
-    setUser(res.data);
-    return res.data;
+    // Backend now returns { success: true, user: {...} }
+    const updatedUser = res.data.user || res.data;
+    setUser(updatedUser);
+    return updatedUser;
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, updateProfile, isAuthenticated: !!token }}>
+    // isAuthenticated is derived from verified user object, not raw token string
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateProfile, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
+

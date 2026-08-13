@@ -4,7 +4,16 @@ import Admin from '../models/Admin.js';
 import { protectAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'content_hunter_jwt_secret_key_2026';
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL: JWT_SECRET environment variable is missing in production.');
+    }
+    return 'content_hunter_jwt_secret_key_2026';
+  }
+  return secret;
+};
 
 // 1. POST /api/auth/login
 router.post('/login', async (req, res) => {
@@ -26,9 +35,10 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate JWT Token
+    const jwtSecret = getJwtSecret();
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: admin.role },
-      JWT_SECRET,
+      jwtSecret,
       { expiresIn: '7d' }
     );
 

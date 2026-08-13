@@ -11,7 +11,7 @@ const BlogDetails = () => {
 
   useEffect(() => {
     api.get(`/blogs/${id}`)
-      .then(res => setBlog(res.data))
+      .then(res => setBlog(res.data.data || res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, [id]);

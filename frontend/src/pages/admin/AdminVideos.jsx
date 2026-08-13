@@ -24,7 +24,7 @@ const AdminVideos = () => {
   const fetchVideos = async () => {
     try {
       const res = await api.get('/videos');
-      setVideos(res.data);
+      setVideos(res.data.data || res.data);
     } catch (e) {
       console.error(e);
     }

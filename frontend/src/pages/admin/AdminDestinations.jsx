@@ -27,7 +27,7 @@ const AdminDestinations = () => {
     setLoading(true);
     try {
       const res = await api.get('/destinations');
-      setDestinations(res.data);
+      setDestinations(res.data.data || res.data);
     } catch (e) {
       console.error(e);
     } finally {

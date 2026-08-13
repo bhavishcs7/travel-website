@@ -31,8 +31,8 @@ const blogSchema = new mongoose.Schema({
     default: '5 min read'
   },
   author: {
-    name: { type: String, default: 'Alex Rivera' },
-    avatar: { type: String, default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300' }
+    name: { type: String, default: '' },
+    avatar: { type: String, default: '' }
   },
   status: {
     type: String,

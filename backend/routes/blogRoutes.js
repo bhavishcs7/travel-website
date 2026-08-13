@@ -2,135 +2,104 @@ const express = require('express');
 const router = express.Router();
 const Blog = require('../models/Blog');
 const { protect } = require('../middleware/auth');
-const memoryStore = require('../utils/memoryStore');
 const { getIsConnected } = require('../config/db');
+
+const dbCheck = (res) => {
+  if (!getIsConnected()) {
+    res.status(503).json({ success: false, message: 'Database unavailable. Please try again later.' });
+    return false;
+  }
+  return true;
+};
 
 // @route GET /api/blogs
 router.get('/', async (req, res) => {
+  if (!dbCheck(res)) return;
   const { search, category } = req.query;
-
-  if (getIsConnected()) {
-    try {
-      let query = {};
-      if (category && category !== 'All') query.category = category;
-      if (search) {
-        query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { excerpt: { $regex: search, $options: 'i' } },
-          { content: { $regex: search, $options: 'i' } }
-        ];
-      }
-      const blogs = await Blog.find(query).sort({ createdAt: -1 });
-      if (blogs.length > 0) return res.json(blogs);
-    } catch (e) {
-      console.warn('DB query fallback');
+  try {
+    let query = {};
+    if (category && category !== 'All') query.category = category;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { excerpt: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
     }
+    const blogs = await Blog.find(query).sort({ createdAt: -1 });
+    res.json({ success: true, data: blogs });
+  } catch (e) {
+    console.error('Get blogs error:', e.message);
+    res.status(500).json({ success: false, message: 'Error fetching blogs' });
   }
-
-  let list = memoryStore.blogs;
-  if (category && category !== 'All') list = list.filter(b => b.category.toLowerCase() === category.toLowerCase());
-  if (search) {
-    const q = search.toLowerCase();
-    list = list.filter(b => b.title.toLowerCase().includes(q) || b.excerpt.toLowerCase().includes(q));
-  }
-
-  res.json(list);
 });
 
 // @route GET /api/blogs/:idOrSlug
 router.get('/:idOrSlug', async (req, res) => {
+  if (!dbCheck(res)) return;
   const param = req.params.idOrSlug;
-
-  if (getIsConnected()) {
-    try {
-      const blog = await Blog.findOne({
-        $or: [{ _id: param.match(/^[0-9a-fA-F]{24}$/) ? param : null }, { slug: param }]
-      });
-      if (blog) {
-        blog.views += 1;
-        await blog.save();
-        return res.json(blog);
-      }
-    } catch (e) {
-      // fallback
-    }
-  }
-
-  const blog = memoryStore.blogs.find(b => b._id === param || b.slug === param);
-  if (blog) {
+  try {
+    const blog = await Blog.findOne({
+      $or: [
+        ...(param.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: param }] : []),
+        { slug: param },
+      ],
+    });
+    if (!blog) return res.status(404).json({ success: false, message: 'Blog post not found' });
     blog.views = (blog.views || 0) + 1;
-    return res.json(blog);
+    await blog.save();
+    res.json({ success: true, data: blog });
+  } catch (e) {
+    console.error('Get blog error:', e.message);
+    res.status(500).json({ success: false, message: 'Error fetching blog' });
   }
-
-  res.status(404).json({ message: 'Blog post not found' });
 });
 
 // @route POST /api/blogs
 router.post('/', protect, async (req, res) => {
+  if (!dbCheck(res)) return;
   const data = req.body;
+  if (!data.title) return res.status(400).json({ success: false, message: 'Title is required' });
   if (!data.slug) {
     data.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   }
-
-  if (getIsConnected()) {
-    try {
-      const newBlog = new Blog(data);
-      const saved = await newBlog.save();
-      return res.status(201).json(saved);
-    } catch (e) {
-      console.warn('DB Save error, falling back to memory store');
-    }
+  try {
+    const newBlog = new Blog(data);
+    const saved = await newBlog.save();
+    res.status(201).json({ success: true, data: saved });
+  } catch (e) {
+    console.error('Create blog error:', e.message);
+    if (e.name === 'ValidationError') return res.status(400).json({ success: false, message: e.message });
+    if (e.code === 11000) return res.status(409).json({ success: false, message: 'A blog with this slug already exists' });
+    res.status(500).json({ success: false, message: 'Error creating blog' });
   }
-
-  const newBlog = {
-    _id: `blog-${Date.now()}`,
-    ...data,
-    author: data.author || memoryStore.user,
-    status: data.status || 'published',
-    views: 0,
-    createdAt: new Date().toISOString()
-  };
-  memoryStore.blogs.unshift(newBlog);
-  res.status(201).json(newBlog);
 });
 
 // @route PUT /api/blogs/:id
 router.put('/:id', protect, async (req, res) => {
-  const id = req.params.id;
-  const updates = req.body;
-
-  if (getIsConnected()) {
-    try {
-      const updated = await Blog.findByIdAndUpdate(id, updates, { new: true });
-      if (updated) return res.json(updated);
-    } catch (e) {
-      // fallback
-    }
+  if (!dbCheck(res)) return;
+  try {
+    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Blog post not found' });
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Update blog error:', e.message);
+    if (e.name === 'ValidationError') return res.status(400).json({ success: false, message: e.message });
+    res.status(500).json({ success: false, message: 'Error updating blog' });
   }
-
-  const idx = memoryStore.blogs.findIndex(b => b._id === id);
-  if (idx !== -1) {
-    memoryStore.blogs[idx] = { ...memoryStore.blogs[idx], ...updates };
-    return res.json(memoryStore.blogs[idx]);
-  }
-
-  res.status(404).json({ message: 'Blog post not found' });
 });
 
 // @route DELETE /api/blogs/:id
 router.delete('/:id', protect, async (req, res) => {
-  const id = req.params.id;
-
-  if (getIsConnected()) {
-    try {
-      await Blog.findByIdAndDelete(id);
-    } catch (e) {
-      // fallback
-    }
+  if (!dbCheck(res)) return;
+  try {
+    const deleted = await Blog.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ success: false, message: 'Blog post not found' });
+    res.json({ success: true, message: 'Blog post deleted successfully' });
+  } catch (e) {
+    console.error('Delete blog error:', e.message);
+    res.status(500).json({ success: false, message: 'Error deleting blog' });
   }
-
-  memoryStore.blogs = memoryStore.blogs.filter(b => b._id !== id);
-  res.json({ message: 'Blog post deleted successfully' });
 });
 
 module.exports = router;

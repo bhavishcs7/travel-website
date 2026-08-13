@@ -21,7 +21,7 @@ const Blogs = () => {
     let url = `/blogs?category=${selectedCategory}`;
     if (searchQuery) url += `&search=${searchQuery}`;
     api.get(url)
-      .then(res => setBlogs(res.data))
+      .then(res => setBlogs(res.data.data || res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };

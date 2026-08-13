@@ -1,4 +1,39 @@
+# Dependencies
 node_modules/
+/.pnp
+.pnp.js
+
+# Production builds
 dist/
+dist-ssr/
+*.local
+
+# Environment variables
 .env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Uploads & Media (local dev only)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
 .vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store

@@ -20,4 +20,20 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+// Auto-logout on 401 (expired or invalid token)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('wanderlust_token');
+      // Only redirect if not already on the login page
+      if (!window.location.pathname.includes('/admin/login')) {
+        window.location.href = '/admin/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
+

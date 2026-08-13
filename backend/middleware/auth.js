@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set.');
+  process.exit(1);
+}
+
 const protect = async (req, res, next) => {
   let token;
 
@@ -10,28 +15,21 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'wanderlust_secret_key_2026');
-      
-      // Try finding user in DB or construct mock user for fallback
-      try {
-        req.user = await User.findById(decoded.id).select('-password');
-      } catch (err) {
-        req.user = { _id: decoded.id, name: 'Admin', email: decoded.email, role: 'admin' };
-      }
-      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      req.user = await User.findById(decoded.id).select('-password');
+
       if (!req.user) {
-        req.user = { _id: decoded.id || 'admin-1', name: 'Admin', email: 'admin@wanderlust.com', role: 'admin' };
+        return res.status(401).json({ success: false, message: 'Not authorized — user not found' });
       }
-      
+
       next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      console.error('Auth middleware error:', error.message);
+      return res.status(401).json({ success: false, message: 'Not authorized — invalid or expired token' });
     }
-  }
-
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token provided' });
+  } else {
+    return res.status(401).json({ success: false, message: 'Not authorized — no token provided' });
   }
 };
 

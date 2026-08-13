@@ -15,7 +15,7 @@ const Destinations = () => {
   const fetchDestinations = () => {
     setLoading(true);
     api.get('/destinations')
-      .then(res => setDestinations(res.data))
+      .then(res => setDestinations(res.data.data || res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };

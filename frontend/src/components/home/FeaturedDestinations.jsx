@@ -10,7 +10,7 @@ const FeaturedDestinations = () => {
 
   useEffect(() => {
     api.get('/destinations?featured=true')
-      .then(res => setDestinations(res.data.slice(0, 3)))
+      .then(res => setDestinations((res.data.data || res.data).slice(0, 3)))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);

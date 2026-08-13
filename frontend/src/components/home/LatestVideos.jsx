@@ -9,7 +9,7 @@ const LatestVideos = () => {
 
   useEffect(() => {
     api.get('/videos')
-      .then(res => setVideos(res.data.slice(0, 4)))
+      .then(res => setVideos((res.data.data || res.data).slice(0, 4)))
       .catch(err => console.error(err));
   }, []);
 

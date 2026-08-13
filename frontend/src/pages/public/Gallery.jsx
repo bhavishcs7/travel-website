@@ -18,7 +18,7 @@ const Gallery = () => {
     let url = '/gallery';
     if (selectedCategory !== 'All') url += `?category=${selectedCategory}`;
     api.get(url)
-      .then(res => setItems(res.data))
+      .then(res => setItems(res.data.data || res.data))
       .catch(err => console.error(err));
   };
 

@@ -1,7 +1,16 @@
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'content_hunter_jwt_secret_key_2026';
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL: JWT_SECRET environment variable is missing in production.');
+    }
+    return 'content_hunter_jwt_secret_key_2026';
+  }
+  return secret;
+};
 
 export const protectAdmin = async (req, res, next) => {
   let token;
@@ -15,7 +24,8 @@ export const protectAdmin = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const jwtSecret = getJwtSecret();
+    const decoded = jwt.verify(token, jwtSecret);
     const admin = await Admin.findById(decoded.id).select('-password');
 
     if (!admin || admin.role !== 'admin') {

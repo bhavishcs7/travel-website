@@ -2,132 +2,126 @@ const express = require('express');
 const router = express.Router();
 const Destination = require('../models/Destination');
 const { protect } = require('../middleware/auth');
-const memoryStore = require('../utils/memoryStore');
 const { getIsConnected } = require('../config/db');
+
+const dbCheck = (res) => {
+  if (!getIsConnected()) {
+    res.status(503).json({ success: false, message: 'Database unavailable. Please try again later.' });
+    return false;
+  }
+  return true;
+};
 
 // @route GET /api/destinations
 router.get('/', async (req, res) => {
+  if (!dbCheck(res)) return;
+
   const { search, country, category, featured } = req.query;
-
-  if (getIsConnected()) {
-    try {
-      let query = {};
-      if (country && country !== 'All') query.country = country;
-      if (category && category !== 'All') query.category = category;
-      if (featured === 'true') query.isFeatured = true;
-      if (search) {
-        query.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { country: { $regex: search, $options: 'i' } }
-        ];
-      }
-
-      const destinations = await Destination.find(query).sort({ createdAt: -1 });
-      if (destinations.length > 0) return res.json(destinations);
-    } catch (e) {
-      console.warn('DB query error, using memory fallback');
+  try {
+    let query = {};
+    if (country && country !== 'All') query.country = country;
+    if (category && category !== 'All') query.category = category;
+    if (featured === 'true') query.isFeatured = true;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { country: { $regex: search, $options: 'i' } },
+      ];
     }
+    const destinations = await Destination.find(query).sort({ createdAt: -1 });
+    res.json({ success: true, data: destinations });
+  } catch (e) {
+    console.error('Get destinations error:', e.message);
+    res.status(500).json({ success: false, message: 'Error fetching destinations' });
   }
-
-  let list = memoryStore.destinations;
-  if (country && country !== 'All') list = list.filter(d => d.country.toLowerCase() === country.toLowerCase());
-  if (category && category !== 'All') list = list.filter(d => d.category.toLowerCase() === category.toLowerCase());
-  if (featured === 'true') list = list.filter(d => d.isFeatured);
-  if (search) {
-    const q = search.toLowerCase();
-    list = list.filter(d => d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q) || d.country.toLowerCase().includes(q));
-  }
-
-  res.json(list);
 });
 
 // @route GET /api/destinations/:idOrSlug
 router.get('/:idOrSlug', async (req, res) => {
+  if (!dbCheck(res)) return;
+
   const param = req.params.idOrSlug;
-
-  if (getIsConnected()) {
-    try {
-      const dest = await Destination.findOne({
-        $or: [{ _id: param.match(/^[0-9a-fA-F]{24}$/) ? param : null }, { slug: param }]
-      });
-      if (dest) return res.json(dest);
-    } catch (e) {
-      // fallback
-    }
+  try {
+    const dest = await Destination.findOne({
+      $or: [
+        ...(param.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: param }] : []),
+        { slug: param },
+      ],
+    });
+    if (!dest) return res.status(404).json({ success: false, message: 'Destination not found' });
+    res.json({ success: true, data: dest });
+  } catch (e) {
+    console.error('Get destination error:', e.message);
+    res.status(500).json({ success: false, message: 'Error fetching destination' });
   }
-
-  const dest = memoryStore.destinations.find(d => d._id === param || d.slug === param);
-  if (dest) return res.json(dest);
-
-  res.status(404).json({ message: 'Destination not found' });
 });
 
 // @route POST /api/destinations
 router.post('/', protect, async (req, res) => {
+  if (!dbCheck(res)) return;
+
   const data = req.body;
+  if (!data.title) {
+    return res.status(400).json({ success: false, message: 'Title is required' });
+  }
   if (!data.slug) {
     data.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   }
 
-  if (getIsConnected()) {
-    try {
-      const newDest = new Destination(data);
-      const saved = await newDest.save();
-      return res.status(201).json(saved);
-    } catch (e) {
-      console.warn('DB Save failed, adding to memory store');
+  try {
+    const newDest = new Destination(data);
+    const saved = await newDest.save();
+    res.status(201).json({ success: true, data: saved });
+  } catch (e) {
+    console.error('Create destination error:', e.message);
+    if (e.name === 'ValidationError') {
+      return res.status(400).json({ success: false, message: e.message });
     }
+    if (e.code === 11000) {
+      return res.status(409).json({ success: false, message: 'A destination with this slug already exists' });
+    }
+    res.status(500).json({ success: false, message: 'Error creating destination' });
   }
-
-  const newDest = {
-    _id: `dest-${Date.now()}`,
-    ...data,
-    isFeatured: !!data.isFeatured,
-    status: data.status || 'published',
-    createdAt: new Date().toISOString()
-  };
-  memoryStore.destinations.unshift(newDest);
-  res.status(201).json(newDest);
 });
 
 // @route PUT /api/destinations/:id
 router.put('/:id', protect, async (req, res) => {
-  const id = req.params.id;
-  const updates = req.body;
+  if (!dbCheck(res)) return;
 
-  if (getIsConnected()) {
-    try {
-      const updated = await Destination.findByIdAndUpdate(id, updates, { new: true });
-      if (updated) return res.json(updated);
-    } catch (e) {
-      // fallback
+  try {
+    const updated = await Destination.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updated) return res.status(404).json({ success: false, message: 'Destination not found' });
+    res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Update destination error:', e.message);
+    if (e.name === 'ValidationError') {
+      return res.status(400).json({ success: false, message: e.message });
     }
+    res.status(500).json({ success: false, message: 'Error updating destination' });
   }
-
-  const idx = memoryStore.destinations.findIndex(d => d._id === id);
-  if (idx !== -1) {
-    memoryStore.destinations[idx] = { ...memoryStore.destinations[idx], ...updates };
-    return res.json(memoryStore.destinations[idx]);
-  }
-
-  res.status(404).json({ message: 'Destination not found' });
 });
 
 // @route DELETE /api/destinations/:id
 router.delete('/:id', protect, async (req, res) => {
-  const id = req.params.id;
+  if (!dbCheck(res)) return;
 
-  if (getIsConnected()) {
-    try {
-      await Destination.findByIdAndDelete(id);
-    } catch (e) {
-      // fallback
-    }
+  try {
+    const deleted = await Destination.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ success: false, message: 'Destination not found' });
+    res.json({ success: true, message: 'Destination deleted successfully' });
+  } catch (e) {
+    console.error('Delete destination error:', e.message);
+    res.status(500).json({ success: false, message: 'Error deleting destination' });
   }
-
-  memoryStore.destinations = memoryStore.destinations.filter(d => d._id !== id);
-  res.json({ message: 'Destination deleted successfully' });
 });
 
 module.exports = router;
+
+
+
+

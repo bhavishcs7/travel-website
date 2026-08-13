@@ -12,11 +12,35 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/content_hunter';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProduction = NODE_ENV === 'production';
 
-// Enable Permissive CORS
+// Support both MONGO_URI and MONGODB_URI
+const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI || (isProduction ? null : 'mongodb://localhost:27017/content_hunter');
+
+if (isProduction && !MONGODB_URI) {
+  console.error('FATAL: MONGO_URI environment variable is required in production.');
+  process.exit(1);
+}
+
+// Production CORS Configuration
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map(url => url.trim().replace(/\/$/, ''))
+  : ['http://localhost:3000', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (!isProduction) return callback(null, true);
+    
+    const formattedOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(formattedOrigin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
@@ -33,11 +57,19 @@ const seedAdminUser = async () => {
   try {
     const adminCount = await Admin.countDocuments();
     if (adminCount === 0) {
+      const email = process.env.ADMIN_EMAIL || (!isProduction ? 'admin@contenthunter.com' : null);
+      const password = process.env.ADMIN_PASSWORD || (!isProduction ? 'AdminPassword123!' : null);
+
+      if (!email || !password) {
+        console.warn('⚠️ No admin user exists, but ADMIN_EMAIL and ADMIN_PASSWORD were not set in production. Admin account was not auto-created.');
+        return;
+      }
+
       console.log('No admin user found. Creating initial admin user...');
       const newAdmin = new Admin({
-        name: 'Content Hunter Admin',
-        email: process.env.ADMIN_EMAIL || 'admin@contenthunter.com',
-        password: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
+        name: process.env.ADMIN_NAME || 'Content Hunter Admin',
+        email,
+        password,
         role: 'admin'
       });
       await newAdmin.save();
@@ -48,26 +80,39 @@ const seedAdminUser = async () => {
   }
 };
 
-// Global DB Connection Caching for Serverless
+// Global DB Connection Caching
 let isConnected = false;
 export const connectToDatabase = async () => {
   if (isConnected || mongoose.connection.readyState >= 1) {
     return;
   }
+  if (!MONGODB_URI) {
+    throw new Error('MONGO_URI is not defined.');
+  }
   try {
-    const db = await mongoose.connect(MONGODB_URI);
+    const db = await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
     isConnected = db.connections[0].readyState >= 1;
-    console.log('Successfully connected to MongoDB!');
+    console.log(`Successfully connected to MongoDB! Host: ${db.connections[0].host}`);
     await seedAdminUser();
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
+    if (isProduction) {
+      throw err;
+    }
   }
 };
 
 // Middleware to ensure DB connection
 app.use(async (req, res, next) => {
-  await connectToDatabase();
-  next();
+  try {
+    await connectToDatabase();
+    next();
+  } catch (err) {
+    res.status(503).json({ success: false, message: 'Database connection unavailable', error: err.message });
+  }
 });
 
 // Routes
@@ -78,15 +123,28 @@ app.use('/api/config', configRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Content Hunter API is running' });
+  const dbStatus = mongoose.connection.readyState >= 1 ? 'connected' : 'disconnected';
+  res.json({
+    status: 'ok',
+    message: 'Content Hunter API is running',
+    database: dbStatus,
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Run standalone server when executed directly locally
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// Standalone server execution for Render / local runtime
+if (!process.env.VERCEL) {
+  const HOST = '0.0.0.0';
   connectToDatabase().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+    app.listen(PORT, HOST, () => {
+      console.log(`Server is running on port ${PORT} [Host: ${HOST}] [Env: ${NODE_ENV}]`);
     });
+  }).catch((err) => {
+    console.error('Fatal: Server startup failed:', err.message);
+    if (isProduction) {
+      process.exit(1);
+    }
   });
 }
 
