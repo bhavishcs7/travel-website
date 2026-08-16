@@ -60,25 +60,34 @@ async function startup() {
   });
 }
 
-// CORS — allow production CLIENT_URL and local dev origins
-const clientOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(',').map((u) => u.trim())
-  : [];
-const allowedOrigins = [
-  ...clientOrigins,
-  'http://localhost:3000',
-  'http://localhost:5173',
-];
-
+// CORS configuration
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. Postman, server-to-server)
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: Origin ${origin} not allowed`));
+    
+    const clientOrigins = process.env.CLIENT_URL
+      ? process.env.CLIENT_URL.split(',').map((u) => u.trim().replace(/\/$/, ''))
+      : [];
+    
+    // Check if origin matches localhost, onrender.com, or CLIENT_URL
+    if (
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.endsWith('.onrender.com') ||
+      origin.endsWith('.vercel.app') ||
+      clientOrigins.includes(origin) ||
+      process.env.NODE_ENV !== 'production'
+    ) {
+      return callback(null, true);
+    }
+    
+    // Fallback: allow all origins in standard mode
+    callback(null, true);
   },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
 }));
 
 const path = require('path');
