@@ -81,8 +81,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+const path = require('path');
+
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+
+// Serve uploaded media files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -102,6 +107,7 @@ app.use('/api/blogs', require('./routes/blogRoutes'));
 app.use('/api/videos', require('./routes/videoRoutes'));
 app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/config', require('./routes/configRoutes'));
 
 // Seed route — only available outside production
 if (process.env.NODE_ENV !== 'production') {
