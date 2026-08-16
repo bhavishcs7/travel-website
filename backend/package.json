@@ -1,6 +1,7 @@
 {
   "name": "wanderlust-backend",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "Travel Creator API Server & CMS Backend",
   "main": "index.js",
   "scripts": {

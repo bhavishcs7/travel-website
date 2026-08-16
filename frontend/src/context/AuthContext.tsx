@@ -27,9 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verifyToken = async () => {
       try {
         const res = await authApi.getMe();
-        if (res.success && res.admin) {
+        const userData = res.user || res.admin;
+        if (res.success && userData) {
           setToken(storedToken);
-          setAdmin(res.admin);
+          setAdmin(userData);
         } else {
           localStorage.removeItem('token');
           setToken(null);
@@ -50,10 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await authApi.login(email, password);
-    if (res.success && res.token) {
+    const userData = res.user || res.admin;
+    if (res.success && res.token && userData) {
       localStorage.setItem('token', res.token);
       setToken(res.token);
-      setAdmin(res.admin);
+      setAdmin(userData);
       return res;
     }
     throw new Error(res.message || 'Login failed.');

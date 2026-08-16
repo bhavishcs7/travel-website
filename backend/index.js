@@ -20,6 +20,12 @@ async function seedAdminUser() {
     return;
   }
 
+  const { getIsConnected } = require('./config/db');
+  if (!getIsConnected()) {
+    console.log('ℹ️  Database not connected — skipping admin initialization.');
+    return;
+  }
+
   try {
     const normalizedEmail = adminEmail.toLowerCase().trim();
     const existing = await User.findOne({ email: normalizedEmail });
@@ -54,10 +60,15 @@ async function startup() {
   });
 }
 
-// CORS — restrict to known frontend origin in production
-const allowedOrigins = process.env.CLIENT_URL
-  ? [process.env.CLIENT_URL]
-  : ['http://localhost:3000', 'http://localhost:5173'];
+// CORS — allow production CLIENT_URL and local dev origins
+const clientOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((u) => u.trim())
+  : [];
+const allowedOrigins = [
+  ...clientOrigins,
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
 
 app.use(cors({
   origin: (origin, callback) => {

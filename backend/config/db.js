@@ -1,4 +1,12 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+
+// Configure public DNS servers to resolve MongoDB Atlas SRV records reliably on Windows/ISP networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (e) {
+  // Ignore if not supported in environment
+}
 
 const connectDB = async () => {
   const mongoUri = process.env.MONGO_URI;
@@ -17,8 +25,7 @@ const connectDB = async () => {
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ MongoDB Connection Failed: ${error.message}`);
-    console.error('Check your MONGO_URI and ensure the database is accessible.');
-    process.exit(1);
+    console.error('Check your MONGO_URI and ensure the database is accessible / IP whitelisted.');
   }
 
   mongoose.connection.on('disconnected', () => {

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Destination = require('../models/Destination');
 const { protect } = require('../middleware/auth');
 const { getIsConnected } = require('../config/db');
@@ -37,18 +38,32 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route GET /api/destinations/admin
+router.get('/admin', protect, async (req, res) => {
+  if (!dbCheck(res)) return;
+
+  try {
+    const destinations = await Destination.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: destinations });
+  } catch (e) {
+    console.error('Get admin destinations error:', e.message);
+    res.status(500).json({ success: false, message: 'Error fetching destinations' });
+  }
+});
+
 // @route GET /api/destinations/:idOrSlug
 router.get('/:idOrSlug', async (req, res) => {
   if (!dbCheck(res)) return;
 
   const param = req.params.idOrSlug;
   try {
-    const dest = await Destination.findOne({
-      $or: [
-        ...(param.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: param }] : []),
-        { slug: param },
-      ],
-    });
+    let dest = null;
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      dest = await Destination.findById(param);
+    }
+    if (!dest) {
+      dest = await Destination.findOne({ slug: param });
+    }
     if (!dest) return res.status(404).json({ success: false, message: 'Destination not found' });
     res.json({ success: true, data: dest });
   } catch (e) {
@@ -121,7 +136,3 @@ router.delete('/:id', protect, async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-
