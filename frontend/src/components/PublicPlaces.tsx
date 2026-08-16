@@ -141,8 +141,8 @@ export default function PublicPlaces({ isHomePage = false }) {
             <span className="text-stone-400 font-outfit uppercase tracking-widest text-xs font-bold animate-pulse">Unearthing Archives...</span>
           </div>
         ) : error ? (
-          <div className="py-16 max-w-md mx-auto text-center p-8 rounded-2xl bg-white border border-red-200 shadow-sm">
-            <p className="text-red-500 text-sm font-outfit font-medium mb-6">{error}</p>
+          <div className="py-16 max-w-md mx-auto text-center p-8 rounded-2xl bg-white border border-[#B8860B]/30 shadow-sm">
+            <p className="text-stone-600 text-sm font-outfit font-medium mb-6">{error}</p>
             <button onClick={fetchPlaces} className="px-8 py-3 rounded-full border border-[#B8860B]/50 text-[#B8860B] hover:bg-[#B8860B] hover:text-white font-outfit text-xs font-bold uppercase tracking-widest transition-all shadow-sm">
               Retry Connection
             </button>

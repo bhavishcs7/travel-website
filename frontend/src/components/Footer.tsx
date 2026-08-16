@@ -63,8 +63,8 @@ export default function Footer() {
               target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-4 text-stone-600 hover:text-stone-900 transition-colors group"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#F3F1ED] group-hover:bg-red-500/10 flex items-center justify-center transition-colors border border-transparent group-hover:border-red-500/30">
-                <Youtube className="w-4 h-4 group-hover:text-red-500 transition-colors" />
+              <div className="w-10 h-10 rounded-xl bg-[#F3F1ED] group-hover:bg-[#B8860B]/10 flex items-center justify-center transition-colors border border-transparent group-hover:border-[#B8860B]/30">
+                <Youtube className="w-4 h-4 group-hover:text-[#B8860B] transition-colors" />
               </div>
               <span className="text-sm font-outfit">Subscribe on YouTube</span>
             </a>

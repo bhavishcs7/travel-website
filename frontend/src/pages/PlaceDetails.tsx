@@ -87,7 +87,7 @@ export default function PlaceDetails() {
   if (error || !place) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center pt-20 px-4 text-center">
-        <Compass className="w-16 h-16 text-red-500 mb-6" />
+        <Compass className="w-16 h-16 text-[#B8860B] mb-6" />
         <h2 className="font-cinzel text-3xl text-stone-900 font-bold mb-4">Discovery Failed</h2>
         <p className="text-stone-600 font-outfit mb-8 max-w-md leading-relaxed">{error || 'The requested archive could not be located.'}</p>
         <button onClick={() => navigate('/places')} className="px-8 py-3 rounded-full border border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-white font-outfit text-xs font-bold uppercase tracking-widest transition-all">
@@ -204,11 +204,11 @@ export default function PlaceDetails() {
                     <iframe src={embedUrl} title={place.placeName} className="absolute inset-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
                   </div>
                 ) : (
-                  <a href={place.youtubeLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-8 py-6 rounded-3xl bg-white border border-stone-200 hover:border-red-500/50 hover:bg-red-50 text-stone-900 transition-all group shadow-sm focus:outline-none">
+                  <a href={place.youtubeLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-8 py-6 rounded-3xl bg-white border border-stone-200 hover:border-[#B8860B]/50 hover:bg-[#F3F1ED] text-stone-900 transition-all group shadow-sm focus:outline-none">
                     <span className="font-outfit font-bold uppercase tracking-widest text-sm flex items-center gap-4">
-                      <Video className="w-6 h-6 text-red-500" /> Watch Full Video on YouTube
+                      <Video className="w-6 h-6 text-[#B8860B]" /> Watch Full Video on YouTube
                     </span>
-                    <ExternalLink className="w-5 h-5 group-hover:text-red-500 transition-colors" />
+                    <ExternalLink className="w-5 h-5 group-hover:text-[#B8860B] transition-colors" />
                   </a>
                 )}
               </motion.section>

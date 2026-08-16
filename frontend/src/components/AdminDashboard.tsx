@@ -359,7 +359,7 @@ function PlaceModal({ editingPlace, onClose, onSuccess }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
             <FormGroup>
-              <FormLabel htmlFor="youtubeLink" optional><Video className="w-3 h-3 inline mr-1 text-red-500"/> YouTube Link</FormLabel>
+              <FormLabel htmlFor="youtubeLink" optional><Video className="w-3 h-3 inline mr-1 text-[#B8860B]"/> YouTube Link</FormLabel>
               <input id="youtubeLink" type="url" value={form.youtubeLink} onChange={set('youtubeLink')} className={fieldNormal} />
             </FormGroup>
             <FormGroup>

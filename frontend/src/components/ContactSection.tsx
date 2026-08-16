@@ -51,23 +51,23 @@ export default function ContactSection() {
             target="_blank"
             rel="noopener noreferrer"
             {...fadeUp(0.15)}
-            className="group relative w-full rounded-3xl bg-white px-10 py-10 shadow-sm hover:shadow-xl border border-stone-100 hover:border-red-500/30 transition-all duration-500 flex flex-col justify-between overflow-hidden"
+            className="group relative w-full rounded-3xl bg-white px-10 py-10 shadow-sm hover:shadow-xl border border-stone-100 hover:border-[#B8860B]/30 transition-all duration-500 flex flex-col justify-between overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-red-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#B8860B] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative z-10 w-full">
               <div className="flex items-center justify-between mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-[#F3F1ED] border border-stone-200 flex items-center justify-center group-hover:bg-red-500/10 group-hover:border-red-500/30 transition-all duration-500">
-                  <Youtube className="w-6 h-6 text-[#B8860B] group-hover:text-red-500 transition-colors duration-500" />
+                <div className="w-14 h-14 rounded-2xl bg-[#F3F1ED] border border-stone-200 flex items-center justify-center group-hover:bg-[#B8860B]/10 group-hover:border-[#B8860B]/30 transition-all duration-500">
+                  <Youtube className="w-6 h-6 text-[#B8860B] group-hover:text-[#8B6508] transition-colors duration-500" />
                 </div>
-                <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center text-stone-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500 transition-all duration-300">
+                <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center text-stone-400 group-hover:bg-[#B8860B] group-hover:text-white group-hover:border-[#B8860B] transition-all duration-300">
                   <ExternalLink className="w-4 h-4" />
                 </div>
               </div>
 
-              <span className="text-[10px] uppercase font-outfit font-bold tracking-[0.2em] text-[#B8860B] group-hover:text-red-500 transition-colors duration-500 mb-3 block">
+              <span className="text-[10px] uppercase font-outfit font-bold tracking-[0.2em] text-[#B8860B] group-hover:text-[#8B6508] transition-colors duration-500 mb-3 block">
                 Official YouTube
               </span>
-              <h3 className="font-cinzel text-3xl font-bold text-stone-900 mb-2 group-hover:text-red-500 transition-colors duration-300">CONTENT HUNTER</h3>
+              <h3 className="font-cinzel text-3xl font-bold text-stone-900 mb-2 group-hover:text-[#B8860B] transition-colors duration-300">CONTENT HUNTER</h3>
               <p className="text-sm font-outfit text-stone-500 mb-6">@contenthunter-o8n</p>
               <p className="text-stone-600 font-outfit font-light text-sm leading-[1.8]">
                 Watch 4K cinematic travel films, ancient monument discoveries, and authentic historical stories. Subscribe now to join every expedition!

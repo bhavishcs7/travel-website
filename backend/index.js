@@ -3,13 +3,56 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const { connectDB } = require('./config/db');
+const User = require('./models/User');
 
 dotenv.config();
 
 const app = express();
 
-// Database Connection
-connectDB();
+// ── Auto-seed: create admin on first startup if ADMIN_EMAIL is configured ────
+async function seedAdminUser() {
+  const adminEmail    = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName     = process.env.ADMIN_NAME || 'Admin';
+
+  if (!adminEmail || !adminPassword) {
+    console.log('ℹ️  ADMIN_EMAIL or ADMIN_PASSWORD not set — skipping automatic admin initialization.');
+    return;
+  }
+
+  try {
+    const normalizedEmail = adminEmail.toLowerCase().trim();
+    const existing = await User.findOne({ email: normalizedEmail });
+
+    if (existing) {
+      console.log(`ℹ️  Admin user already exists (${existing.email}) — no action taken.`);
+      return;
+    }
+
+    // Password is plain text here — User model pre-save hook bcrypt-hashes it
+    await User.create({
+      name:     adminName,
+      email:    normalizedEmail,
+      password: adminPassword,
+      role:     'admin',
+    });
+
+    console.log(`✅ Admin user created: ${normalizedEmail}`);
+  } catch (err) {
+    // Never crash the backend over an admin seed failure
+    console.error('⚠️  Admin auto-initialization failed (non-fatal):', err.message);
+  }
+}
+
+// ── Startup: connect to DB, seed admin, then start HTTP server ────────────────
+async function startup() {
+  await connectDB();
+  await seedAdminUser();
+
+  app.listen(PORT, () => {
+    console.log(`🌍 Wanderlust Backend running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  });
+}
 
 // CORS — restrict to known frontend origin in production
 const allowedOrigins = process.env.CLIENT_URL
@@ -72,7 +115,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🌍 Wanderlust Backend running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
-});
+startup();
 
